@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>No.8 育成カリキュラム</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2C2A28">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="No.8育成">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+  :root{
+    --bg:#FAF7F2;
+    --ink:#2C2A28;
+    --ink-soft:#6B6660;
+    --card:#FFFFFF;
+    --line:#EDE8E0;
+    --accent:#B8895A;
+    --accent-dark:#8C6239;
+    --pink-l:#FDEDF0; --pink-m:#F6C9D3; --pink-d:#D98AA0;
+    --blue-l:#E9F0FB; --blue-m:#C6DAF5; --blue-d:#6E96D6;
+    --green-l:#EAF7EE; --green-m:#C8EAD2; --green-d:#5FAE7C;
+    --teal-l:#E3F6F2; --teal-m:#9FE6D2; --teal-d:#159C7A;
+    --rose-l:#FDEAF0; --rose-m:#F7A0C0; --rose-d:#D81B5C;
+    --purple-l:#F2EDFB; --purple-m:#CBB1EF; --purple-d:#7C4FCB;
+    --amber-l:#FFF3E2; --amber-m:#FFCD80; --amber-d:#D6820F;
+    --yellow:#FCE8B2;
+    --shadow: 0 2px 10px rgba(40,30,20,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:linear-gradient(135deg,#2C2A28,#46413B);
+    color:#fff;
+    padding:16px 18px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    box-shadow:var(--shadow);
+  }
+  .topbar h1{
+    font-size:17px; margin:0; font-weight:700; letter-spacing:.02em;
+  }
+  .topbar .sub{font-size:11px; color:#D8CDBE; margin-top:2px;}
+  .sync{
+    font-size:11px; color:#D8CDBE; display:flex; align-items:center; gap:6px;
+  }
+  .sync .dot{width:7px;height:7px;border-radius:50%;background:#8FBF8F; transition:background .3s;}
+  .sync.saving .dot{background:#E0B25B; animation:pulse 1s infinite;}
+  .sync.err .dot{background:#D9756C;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .settings-btn{
+    border:none; background:rgba(255,255,255,.12); color:#fff; width:30px; height:30px;
+    border-radius:8px; font-size:14px; cursor:pointer; flex:none;
+  }
+
+  .wrap{max-width:720px; margin:0 auto; padding:16px;}
+
+  /* ---- LIST VIEW ---- */
+  .add-btn{
+    width:100%; padding:14px; border:none; border-radius:14px;
+    background:var(--accent); color:#fff; font-size:15px; font-weight:700;
+    box-shadow:var(--shadow); margin-bottom:14px; cursor:pointer;
+  }
+  .add-btn:active{background:var(--accent-dark);}
+  .stylist-card{
+    background:var(--card); border-radius:16px; padding:14px 16px;
+    box-shadow:var(--shadow); margin-bottom:10px;
+    display:flex; align-items:center; gap:14px; cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .stylist-card:active{transform:scale(.99);}
+  .ring{
+    width:52px; height:52px; border-radius:50%; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:var(--ink);
+    background:conic-gradient(var(--ring-color,#B8895A) calc(var(--pct,0)*1%), #ECE6DC 0);
+    position:relative;
+  }
+  .ring::after{
+    content:""; position:absolute; inset:5px; border-radius:50%; background:var(--card);
+  }
+  .ring span{position:relative; z-index:1;}
+  .stylist-info{flex:1; min-width:0;}
+  .stylist-name{font-size:15px; font-weight:700; color:var(--ink);}
+  .stylist-meta{font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--ink-soft); font-size:13.5px;
+  }
+  .empty-state .big{font-size:30px; margin-bottom:8px;}
+
+  /* ---- DETAIL VIEW ---- */
+  .detail-header{
+    display:flex; align-items:center; gap:10px; margin-bottom:14px;
+  }
+  .back-btn{
+    border:none; background:var(--card); width:36px; height:36px; border-radius:10px;
+    box-shadow:var(--shadow); font-size:16px; cursor:pointer; flex:none;
+  }
+  .name-input{
+    flex:1; font-size:18px; font-weight:700; border:none; background:transparent;
+    border-bottom:2px solid var(--line); padding:6px 2px; color:var(--ink);
+  }
+  .name-input:focus{outline:none; border-bottom-color:var(--accent);}
+  .del-btn{
+    border:none; background:transparent; color:#C77A6F; font-size:12px; cursor:pointer; flex:none;
+    padding:6px 4px;
+  }
+
+  .meta-row{display:flex; gap:10px; margin-bottom:14px;}
+  .meta-field{flex:1; background:var(--card); border-radius:12px; padding:8px 12px; box-shadow:var(--shadow);}
+  .meta-field label{display:block; font-size:10.5px; color:var(--ink-soft); margin-bottom:3px;}
+  .meta-field input[type=date]{border:none; font-size:13px; width:100%; background:transparent; color:var(--ink);}
+
+  .progress-card{
+    background:var(--card); border-radius:18px; padding:18px; box-shadow:var(--shadow);
+    margin-bottom:16px; display:flex; align-items:center; gap:18px;
+  }
+  .progress-ring{
+    width:84px; height:84px; border-radius:50%; flex:none; position:relative;
+    background:conic-gradient(var(--accent) calc(var(--pct,0)*1%), #ECE6DC 0);
+  }
+  .progress-ring::after{content:""; position:absolute; inset:8px; border-radius:50%; background:var(--card);}
+  .progress-ring .num{position:relative; z-index:1; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800;}
+  .progress-text{flex:1;}
+  .progress-text .label{font-size:11.5px; color:var(--ink-soft);}
+  .progress-text .sub{font-size:12.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;}
+  .legend{display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;}
+  .legend span{font-size:10.5px; color:var(--ink-soft); display:flex; align-items:center; gap:4px;}
+  .legend i{width:8px; height:8px; border-radius:50%; display:inline-block;}
+
+  .cat-section{margin-bottom:14px; border-radius:16px; overflow:hidden; box-shadow:var(--shadow);}
+  .cat-head{
+    padding:10px 14px; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; background:var(--card); gap:10px;
+  }
+  .cat-head-left{display:flex; align-items:center; gap:10px; min-width:0;}
+  .cat-icon-badge{
+    width:36px; height:36px; flex:none; border-radius:11px; display:flex; align-items:center;
+    justify-content:center; font-size:18px;
+  }
+  .cat-head-name{font-weight:700; font-size:13.5px; color:var(--ink);}
+  .cat-head .cnt{font-size:11px; font-weight:600; color:var(--ink-soft); flex:none;}
+  .cat-body{background:var(--card); border-top:1px solid var(--line);}
+  .cat-body.collapsed{display:none;}
+
+  .item-row{
+    padding:12px 14px; border-bottom:1px solid var(--line);
+  }
+  .item-row:last-child{border-bottom:none;}
+  .item-row.note{
+    font-weight:700; font-size:12.5px; padding:9px 14px; color:#fff;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .item-top{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .item-name{font-size:13.5px; font-weight:600; color:var(--ink); line-height:1.4;}
+  .item-detail{font-size:11px; color:var(--ink-soft); white-space:nowrap; flex:none;}
+  .item-type{
+    display:inline-block; font-size:9.5px; padding:1px 6px; border-radius:6px; margin-right:6px;
+    background:var(--line); color:var(--ink-soft); font-weight:600; vertical-align:1px;
+  }
+  .instructor-grid{display:flex; gap:8px; margin-top:8px;}
+  .instructor-box{
+    flex:1; display:flex; align-items:center; gap:6px;
+    background:var(--bg); border-radius:10px; padding:5px 8px; border:1px solid var(--line);
+  }
+  .instructor-box input[type=text]{
+    flex:1; border:none; background:transparent; font-size:12px; color:var(--ink); min-width:0;
+  }
+  .instructor-box input[type=text]:focus{outline:none;}
+  .chk{
+    width:26px; height:26px; flex:none; border-radius:8px; border:2px solid var(--line);
+    background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:transparent; transition:all .15s;
+  }
+  .chk.on{background:var(--green-d); border-color:var(--green-d); color:#fff;}
+  .item-row.both .item-name{color:var(--green-d);}
+  .item-row.partial{background:#FFFCF4;}
+
+  .instr-pill{
+    flex:1; border:1px solid var(--line); border-radius:10px; padding:7px 8px;
+    background:var(--bg); color:var(--ink-soft); cursor:pointer; transition:all .15s;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    min-height:38px;
+  }
+  .instr-pill .iname{
+    font-size:11.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; max-width:100%;
+  }
+  .instr-pill .idate{font-size:9px; font-weight:600; opacity:.85;}
+  .instr-pill.on{background:var(--green-d); border-color:var(--green-d); color:#fff;}
+  .edit-icon-btn{
+    border:none; background:transparent; cursor:pointer; font-size:13px; padding:2px 4px;
+    flex:none; opacity:.6; line-height:1;
+  }
+  .edit-icon-btn:active{opacity:1;}
+
+  .add-item-btn{
+    display:block; width:100%; padding:11px; border:none; border-top:1px solid var(--line);
+    background:var(--card); color:var(--accent-dark); font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .add-item-btn:active{background:var(--bg);}
+
+  .video-section{margin-top:9px;}
+  .video-toggle-row{display:flex; gap:8px;}
+  .video-btn{
+    flex:1; border:none; border-radius:9px; padding:7px 10px; font-size:11.5px; font-weight:600;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .video-btn.has{background:#E4EFE6; color:var(--green-d);}
+  .video-btn.none{background:var(--bg); color:var(--ink-soft); border:1px dashed #D8D0C4;}
+  .video-btn.uploading{background:var(--yellow); color:#7A5B12;}
+  .video-frame-wrap{margin-top:8px; border-radius:10px; overflow:hidden; background:#000;}
+  .video-frame-wrap iframe{width:100%; height:190px; border:none; display:block;}
+  .video-meta-row{display:flex; justify-content:space-between; align-items:center; margin-top:6px;}
+  .video-meta-row .fname{font-size:10.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;}
+  .video-meta-row .actions{display:flex; gap:10px;}
+  .video-meta-row button{border:none; background:none; font-size:11px; color:var(--ink-soft); cursor:pointer; text-decoration:underline;}
+  .video-meta-row button.danger{color:#C77A6F;}
+  .spinner{
+    width:13px; height:13px; border-radius:50%; border:2px solid rgba(122,91,18,.3); border-top-color:#7A5B12;
+    animation:spin 0.7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .footer-note{text-align:center; font-size:11px; color:var(--ink-soft); padding:18px 0 6px;}
+
+  .photo-card{
+    background:var(--card); border-radius:18px; padding:16px; box-shadow:var(--shadow); margin-bottom:16px;
+  }
+  .photo-card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .photo-title{font-size:13px; font-weight:700; color:var(--ink);}
+  .photo-upload-btn{
+    border:none; background:var(--accent); color:#fff; font-size:11.5px; font-weight:700;
+    padding:7px 12px; border-radius:9px; cursor:pointer;
+  }
+  .photo-upload-btn:disabled{opacity:.6;}
+  .photo-main{
+    width:100%; border-radius:14px; overflow:hidden; background:#F2EEE6;
+    display:flex; align-items:center; justify-content:center; min-height:140px;
+  }
+  .photo-main img{width:100%; max-height:280px; object-fit:cover; display:block; cursor:pointer;}
+  .photo-empty{font-size:12px; color:var(--ink-soft); text-align:center; width:100%; padding:36px 10px;}
+  .photo-meta{font-size:10.5px; color:var(--ink-soft); margin-top:7px;}
+  .photo-history{display:flex; gap:6px; margin-top:10px; overflow-x:auto; padding-bottom:2px;}
+  .photo-history img{
+    width:52px; height:52px; object-fit:cover; border-radius:8px; flex:none; cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .photo-lightbox-bg{
+    position:fixed; inset:0; background:rgba(15,12,10,.88); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .photo-lightbox-bg img{max-width:100%; max-height:85vh; border-radius:10px; display:block;}
+  .photo-lightbox-close{
+    position:absolute; top:18px; right:18px; background:rgba(255,255,255,.18); border:none;
+    color:#fff; width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer;
+  }
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(20,15,10,.4); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal{
+    background:#fff; border-radius:16px; padding:20px; width:100%; max-width:340px;
+  }
+  .modal h3{margin:0 0 12px; font-size:15px;}
+  .modal input{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px;
+    margin-bottom:14px;
+  }
+  .modal-actions{display:flex; gap:8px;}
+  .modal-actions button{
+    flex:1; padding:10px; border:none; border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .modal-actions .cancel{background:var(--line); color:var(--ink-soft);}
+  .modal-actions .ok{background:var(--accent); color:#fff;}
+
+  .instr-chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px;}
+  .instr-chip{
+    border:1px solid var(--accent); background:#FBF3EA; color:var(--accent-dark);
+    font-size:12px; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer;
+  }
+  .instr-chip:active{background:var(--accent); color:#fff;}
+
+  .report-modal{max-width:360px; max-height:85vh; overflow-y:auto;}
+  .report-modal .hint{font-size:11.5px; color:var(--ink-soft); margin:-6px 0 14px; line-height:1.6;}
+  .report-modal .email-input{margin-bottom:8px !important; font-size:13px !important; padding:9px 10px !important;}
+  .report-modal .send-now-btn{
+    width:100%; padding:11px; border:none; border-radius:10px; background:#5B7FBA; color:#fff;
+    font-weight:700; font-size:13px; cursor:pointer; margin-top:4px;
+  }
+  .report-modal .send-now-btn:disabled{opacity:.6;}
+  .report-status{font-size:12px; margin-top:10px; text-align:center;}
+  .report-status.ok{color:var(--green-d);}
+  .report-status.err{color:#C77A6F;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>No.8 育成カリキュラム</h1>
+    <div class="sub">スタイリスト育成チェックリスト</div>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div class="sync" id="syncIndicator"><span class="dot"></span><span id="syncText">同期済み</span></div>
+    <button class="settings-btn" onclick="openSettingsModal()" title="レポート設定">⚙️</button>
+  </div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<script id="items-data" type="application/json">[{"id": 1, "category": "シャンプー＆スパ", "type": "講義", "item": "入社前オリエンテーション （3月月曜日）", "detail": "", "instructor": "①電話②受付③動き ④基本⑤言葉遣い⑥その他"}, {"id": 2, "category": "シャンプー＆スパ", "type": "実技", "item": "シャンプー", "detail": "20分", "instructor": ""}, {"id": 71, "category": "シャンプー＆スパ", "type": "お知らせ", "item": "シャンプー入客", "detail": "", "instructor": ""}, {"id": 3, "category": "シャンプー＆スパ", "type": "実技", "item": "ヘッドスパ", "detail": "45分", "instructor": ""}, {"id": 4, "category": "シャンプー＆スパ", "type": "講義", "item": "①ヘッドスパカウンセリング②ドライ方法", "detail": "", "instructor": "清水"}, {"id": 5, "category": "シャンプー＆スパ", "type": "お知らせ", "item": "スパ入客", "detail": "", "instructor": ""}, {"id": 6, "category": "カラー", "type": "お知らせ", "item": "カラー", "detail": "", "instructor": ""}, {"id": 7, "category": "カラー", "type": "実技", "item": "カラー理論・準備物 （ホワイトボード・使用薬剤など）", "detail": "清水・岩切", "instructor": ""}, {"id": 8, "category": "カラー", "type": "実技", "item": "グレイタッチ （横スライス・デンマンブロー）", "detail": "8分", "instructor": ""}, {"id": 9, "category": "カラー", "type": "実技", "item": "フルカラー", "detail": "15分", "instructor": ""}, {"id": 10, "category": "カラー", "type": "実技", "item": "ゼロタッチ （縦スライス・ロールブラシブロー）", "detail": "10分", "instructor": ""}, {"id": 11, "category": "カラー", "type": "実技", "item": "ブリーチ ゼロタッチ2cm", "detail": "20分", "instructor": ""}, {"id": 12, "category": "カラー", "type": "実技", "item": "マニキュア コームタッチ２ｃｍ", "detail": "15分", "instructor": ""}, {"id": 13, "category": "カラー", "type": "実技", "item": "ホイルワーク76枚", "detail": "ホイル1本", "instructor": ""}, {"id": 14, "category": "カラー", "type": "実技", "item": "インナーカラー", "detail": "1ウィッグ", "instructor": ""}, {"id": 15, "category": "カラー", "type": "実技", "item": "イヤリングカラー", "detail": "1ウィッグ", "instructor": ""}, {"id": 16, "category": "カラー", "type": "実技", "item": "フレーミングカラー", "detail": "1ウィッグ", "instructor": ""}, {"id": 17, "category": "カラー", "type": "実技", "item": "ブリーチペーパーリタッチ ３ｃｍ  （根本３㎝あけたウィッグ作成）", "detail": "１ウィッグ 30分", "instructor": ""}, {"id": 18, "category": "カラー", "type": "実技", "item": "ペールカラー4色 （１８Lvウィッグ作成）", "detail": "1ウィッグ", "instructor": ""}, {"id": 19, "category": "カラー", "type": "講義", "item": "①カラーカウンセリング ②毛束色だし（10Lv毛・黒毛）", "detail": "", "instructor": "清水"}, {"id": 20, "category": "カラー", "type": "お知らせ", "item": "カラーモデル開始 50人 （内ブリーチモデル最低5人以上） ビフォーアフターＳＯＥＡＳＹアプリ投稿", "detail": "", "instructor": ""}, {"id": 21, "category": "カラー", "type": "お知らせ", "item": "カラー シングルカラー２ｈ平日１７時スタート", "detail": "", "instructor": ""}, {"id": 22, "category": "カラー", "type": "実技", "item": "ハイライト全体（ロング）", "detail": "1体", "instructor": ""}, {"id": 23, "category": "カラー", "type": "実技", "item": "コーム白髪ぼかし（ロング）", "detail": "1体", "instructor": ""}, {"id": 24, "category": "カラー", "type": "実技", "item": "白髪ぼかしハイライト（ショートスタイル）", "detail": "1体", "instructor": ""}, {"id": 72, "category": "カラー", "type": "お知らせ", "item": "カラー知り合い入客OK", "detail": "", "instructor": ""}, {"id": 25, "category": "パーマ", "type": "講義", "item": "コールド・クリームパーマ理論", "detail": "", "instructor": "清水"}, {"id": 26, "category": "パーマ", "type": "実技", "item": "①ストレートアイロン （くせ毛ウィッグ）", "detail": "40分・3頭", "instructor": ""}, {"id": 27, "category": "パーマ", "type": "実技", "item": "平巻 エレベーション", "detail": "2回", "instructor": ""}, {"id": 28, "category": "パーマ", "type": "実技", "item": "スパイラル（毛先巻き）", "detail": "2回", "instructor": ""}, {"id": 29, "category": "パーマ", "type": "実技", "item": "スパイラル（中間・根本）", "detail": "2回", "instructor": ""}, {"id": 30, "category": "パーマ", "type": "お知らせ", "item": "メンズパーマ（下バリカンカリアゲ＋上アイラインマッシュ）", "detail": "", "instructor": ""}, {"id": 31, "category": "パーマ", "type": "実技", "item": "ピンカール（リフト・フラット）", "detail": "2回", "instructor": ""}, {"id": 32, "category": "パーマ", "type": "実技", "item": "メンズツイストスパイラル", "detail": "２回", "instructor": ""}, {"id": 33, "category": "パーマ", "type": "実技", "item": "メンズ波巻", "detail": "２回", "instructor": ""}, {"id": 34, "category": "パーマ", "type": "実技", "item": "メンズスパイラル", "detail": "２回", "instructor": ""}, {"id": 35, "category": "パーマ", "type": "お知らせ", "item": "ストレートパーマ・デジタルパーマ", "detail": "", "instructor": ""}, {"id": 36, "category": "パーマ", "type": "講義", "item": "ホット系パーマ理論", "detail": "", "instructor": "清水"}, {"id": 37, "category": "パーマ", "type": "実技", "item": "アルカリストレート（黒髪半頭） 酸性ストレート（14Lv 半頭）", "detail": "くせ毛ウィッグ", "instructor": ""}, {"id": 38, "category": "パーマ", "type": "実技", "item": "塗分ストレート（右全カラー/左4㎝空カラー）", "detail": "くせ毛ウィッグ", "instructor": ""}, {"id": 39, "category": "パーマ", "type": "実技", "item": "デジタルパーマ（２００使用）", "detail": "カットウィッグ", "instructor": ""}, {"id": 40, "category": "パーマ", "type": "実技", "item": "ストカール", "detail": "カットウィッグ", "instructor": ""}, {"id": 41, "category": "アレンジ", "type": "お知らせ", "item": "アレンジ", "detail": "", "instructor": ""}, {"id": 42, "category": "アレンジ", "type": "実技", "item": "①波巻②カールアイロン③ホットカラー ④元結（黒ゴム結び方）・すき毛・ピン止め", "detail": "1回づつ", "instructor": ""}, {"id": 43, "category": "アレンジ", "type": "実技", "item": "①基本アレンジ（本参考） ②トレンドアレンジ（韓国風他）", "detail": "①3スタイル ②3スタイル", "instructor": ""}, {"id": 44, "category": "アレンジ", "type": "実技", "item": "アレンジモデル（スタッフ可）", "detail": "1人", "instructor": ""}, {"id": 73, "category": "アレンジ", "type": "お知らせ", "item": "アレンジ入客", "detail": "", "instructor": ""}, {"id": 45, "category": "men'sカット", "type": "お知らせ", "item": "men'sカット", "detail": "", "instructor": ""}, {"id": 46, "category": "men'sカット", "type": "実技", "item": "①セイムレイヤー②カリアゲ2種類", "detail": "40分", "instructor": ""}, {"id": 47, "category": "men'sカット", "type": "実技", "item": "メンズコピースタイル１０ （5分展開図・写真・内3スタイルパーマ）", "detail": "１０スタイル", "instructor": ""}, {"id": 48, "category": "men'sカット", "type": "お知らせ", "item": "カット・パーマモデル１０人（内パーマ5人）", "detail": "", "instructor": ""}, {"id": 49, "category": "men'sカット", "type": "お知らせ", "item": "メンズ  カット１ｈ/カット＆パーマ2.5h 平日１8時スタート", "detail": "", "instructor": ""}, {"id": 50, "category": "レディースカット", "type": "実技", "item": "ワンレングスボブ （デンマンブロー）", "detail": "40分", "instructor": ""}, {"id": 51, "category": "レディースカット", "type": "実技", "item": "マッシュボブ （ロールブラシブロー）", "detail": "40分", "instructor": ""}, {"id": 52, "category": "レディースカット", "type": "実技", "item": "前下がりボブ", "detail": "40分", "instructor": ""}, {"id": 53, "category": "レディースカット", "type": "実技", "item": "グラデーションボブ", "detail": "40分", "instructor": ""}, {"id": 54, "category": "レディースカット", "type": "お知らせ", "item": "①セニング・スライド・チョップカット ②展開図書き", "detail": "", "instructor": ""}, {"id": 55, "category": "レディースカット", "type": "お知らせ", "item": "コピースタイル３０ スタイリングまでしてチェック☑️", "detail": "", "instructor": ""}, {"id": 56, "category": "レディースカット", "type": "実技", "item": "ロング顔周りレイヤー", "detail": "ー", "instructor": ""}, {"id": 57, "category": "レディースカット", "type": "実技", "item": "ミディアムレイヤー", "detail": "ー", "instructor": ""}, {"id": 58, "category": "レディースカット", "type": "実技", "item": "ショートレイヤー", "detail": "ー", "instructor": ""}, {"id": 59, "category": "レディースカット", "type": "実技", "item": "くびれショート", "detail": "ー", "instructor": ""}, {"id": 60, "category": "レディースカット", "type": "実技", "item": "ミディアムグラ", "detail": "ー", "instructor": ""}, {"id": 61, "category": "レディースカット", "type": "実技", "item": "ミニボブ", "detail": "ー", "instructor": ""}, {"id": 62, "category": "レディースカット", "type": "実技", "item": "ショートボブ", "detail": "ー", "instructor": ""}, {"id": 63, "category": "レディースカット", "type": "実技", "item": "トランクスボブ", "detail": "ー", "instructor": ""}, {"id": 64, "category": "レディースカット", "type": "お知らせ", "item": "①顔周りカット②前髪カット", "detail": "", "instructor": ""}, {"id": 65, "category": "レディースカット", "type": "実技", "item": "コピースタイル（5分展開図・写真） フリースタイル２０", "detail": "ー", "instructor": ""}, {"id": 66, "category": "レディースカット", "type": "実技", "item": "ストレートパーマモデル", "detail": "5人", "instructor": ""}, {"id": 67, "category": "レディースカット", "type": "実技", "item": "レディースカットモデル （内5人パーマモデル）", "detail": "30人", "instructor": ""}, {"id": 68, "category": "レディースカット", "type": "お知らせ", "item": "☆スタイリスト デビューテスト タイマー試験官管理 ☆  ①肩上（切りっぱなし不可）②肩下 2人 カウンセリング⇒シャンプーカット仕上げ1.5h 平日18時スタート", "detail": "", "instructor": ""}]</script>
+<script>
+/* ====================== CONFIG ======================
+   ここにGoogle Apps Scriptの「ウェブアプリURL」を貼り付けてください。
+   （セットアップ手順.md を参照）
+====================================================== */
+const GAS_URL = "ここにGASのウェブアプリURLを貼り付け";
+
+const ITEMS = JSON.parse(document.getElementById('items-data').textContent);
+
+const CAT_COLORS = {
+  'シャンプー＆スパ': {light:'var(--teal-l)', mid:'var(--teal-m)', dark:'var(--teal-d)', icon:'💧'},
+  'カラー':           {light:'var(--rose-l)', mid:'var(--rose-m)', dark:'var(--rose-d)', icon:'🎨'},
+  'パーマ':           {light:'var(--blue-l)', mid:'var(--blue-m)', dark:'var(--blue-d)', icon:'🌀'},
+  'アレンジ':         {light:'var(--purple-l)', mid:'var(--purple-m)', dark:'var(--purple-d)', icon:'✨'},
+  "men'sカット":      {light:'var(--amber-l)', mid:'var(--amber-m)', dark:'var(--amber-d)', icon:'✂️'},
+  'レディースカット':  {light:'var(--green-l)', mid:'var(--green-m)', dark:'var(--green-d)', icon:'💇'},
+};
+const CATEGORIES = ['シャンプー＆スパ','カラー','パーマ','アレンジ',"men'sカット",'レディースカット'];
+
+function getOverride(id){ return state.itemEdits ? state.itemEdits[String(id)] : null; }
+const BASE_ITEM_IDS = new Set(ITEMS.map(it => it.id));
+function effectiveItems(){
+  const fromBase = ITEMS
+    .filter(it => { const o = getOverride(it.id); return !(o && o.deleted); })
+    .map(it => {
+      const o = getOverride(it.id);
+      if(!o) return it;
+      const merged = Object.assign({}, it);
+      if(o.item !== undefined && o.item !== null) merged.item = o.item;
+      if(o.detail !== undefined && o.detail !== null) merged.detail = o.detail;
+      return merged;
+    });
+  const newOnes = Object.keys(state.itemEdits || {})
+    .filter(idStr => !BASE_ITEM_IDS.has(Number(idStr)))
+    .map(idStr => ({ idStr, o: state.itemEdits[idStr] }))
+    .filter(({o}) => o && o.category && !o.deleted)
+    .sort((a,b) => Number(a.idStr) - Number(b.idStr))
+    .map(({idStr, o}) => ({
+      id: Number(idStr), category: o.category, type: o.type || '実技',
+      item: o.item || '', detail: o.detail || '', instructor: ''
+    }));
+  return fromBase.concat(newOnes);
+}
+function effectiveTargetItems(){ return effectiveItems().filter(it => it.type !== 'お知らせ'); }
+
+let state = { stylists: [], videos: {}, itemEdits: {}, photos: {}, settings: { emails: [], instructors: [] } };   // stylists:[{name,startDate,updatedDate,checklist:{itemId:{i1,c1,i2,c2,date}}}], videos:{itemId:{fileId,fileName,uploadedDate}}, itemEdits:{itemId:{item,detail,deleted}}, photos:{stylistName:[{fileId,fileName,uploadedDate}]}, settings:{emails:[...], instructors:[...]}
+let currentView = 'list';       // 'list' | 'detail'
+let currentIndex = -1;
+let saveTimer = null;
+let collapsedCats = {};
+let openVideoItems = {};   // itemId -> true if video panel expanded
+let uploadingItems = {};   // itemId -> true while upload in progress
+let uploadingPhoto = false;
+
+/* ---------------- persistence ---------------- */
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem('no8_curriculum_v1');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state.stylists = parsed.stylists || [];
+      state.videos = parsed.videos || {};
+      state.itemEdits = parsed.itemEdits || {};
+      state.photos = parsed.photos || {};
+      state.settings = parsed.settings || { emails: [], instructors: [] };
+    }
+  }catch(e){}
+}
+function saveLocal(){
+  try{ localStorage.setItem('no8_curriculum_v1', JSON.stringify(state)); }catch(e){}
+}
+
+function setSync(mode){
+  const el = document.getElementById('syncIndicator');
+  const txt = document.getElementById('syncText');
+  el.className = 'sync' + (mode==='saving' ? ' saving' : mode==='err' ? ' err' : '');
+  txt.textContent = mode==='saving' ? '保存中…' : mode==='err' ? '同期エラー（ローカルには保存済み）' : '同期済み';
+}
+
+function fetchFromServer(onDone){
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0) return;
+  const cbName = 'no8cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+  window[cbName] = function(data){
+    mergeServerData(data.stylists);
+    mergeVideos(data.videos);
+    mergeItemEdits(data.itemEdits);
+    mergePhotos(data.photos);
+    mergeSettings(data.settings);
+    delete window[cbName];
+    script.remove();
+    if(onDone) onDone();
+  };
+  const script = document.createElement('script');
+  script.src = GAS_URL + '?action=list&callback=' + cbName;
+  script.onerror = function(){ setSync('err'); };
+  document.body.appendChild(script);
+}
+
+function mergeServerData(serverList){
+  if(!Array.isArray(serverList)) return;
+  serverList.forEach(srv => {
+    let checklist = {};
+    try{ checklist = JSON.parse(srv.data || '{}'); }catch(e){}
+    const existing = state.stylists.find(s => s.name === srv.name);
+    if(existing){
+      // server wins if it is newer
+      if(!existing.updatedDate || new Date(srv.updatedDate) > new Date(existing.updatedDate)){
+        existing.checklist = checklist;
+        existing.updatedDate = srv.updatedDate;
+        existing.startDate = existing.startDate || srv.startDate;
+      }
+    } else {
+      state.stylists.push({name: srv.name, startDate: srv.startDate, updatedDate: srv.updatedDate, checklist});
+    }
+  });
+  saveLocal();
+  render();
+}
+
+function mergeVideos(serverVideos){
+  if(!Array.isArray(serverVideos)) return;
+  const map = {};
+  serverVideos.forEach(v => { map[String(v.itemId)] = v; });
+  state.videos = map;
+  saveLocal();
+  render();
+}
+
+function mergeItemEdits(serverEdits){
+  if(!Array.isArray(serverEdits)) return;
+  const map = {};
+  serverEdits.forEach(e => { map[String(e.itemId)] = e; });
+  state.itemEdits = map;
+  saveLocal();
+  render();
+}
+
+function mergePhotos(serverPhotos){
+  if(!Array.isArray(serverPhotos)) return;
+  const byName = {};
+  serverPhotos.forEach(p => {
+    if(!byName[p.name]) byName[p.name] = [];
+    byName[p.name].push(p);
+  });
+  Object.keys(byName).forEach(name => {
+    byName[name].sort((a,b)=> new Date(b.uploadedDate) - new Date(a.uploadedDate));
+    byName[name] = byName[name].slice(0, 10);
+  });
+  state.photos = byName;
+  saveLocal();
+  render();
+}
+
+function mergeSettings(serverSettings){
+  if(!serverSettings) return;
+  state.settings = {
+    emails: Array.isArray(serverSettings.emails) ? serverSettings.emails : (state.settings.emails || []),
+    instructors: Array.isArray(serverSettings.instructors) ? serverSettings.instructors : (state.settings.instructors || [])
+  };
+  saveLocal();
+}
+
+function pushToServer(stylist){
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0) return;
+  setSync('saving');
+  fetch(GAS_URL, {
+    method:'POST',
+    mode:'no-cors',
+    body: JSON.stringify({
+      action:'save',
+      name: stylist.name,
+      startDate: stylist.startDate || '',
+      updatedDate: stylist.updatedDate,
+      data: JSON.stringify(stylist.checklist)
+    })
+  }).then(()=> setSync('ok')).catch(()=> setSync('err'));
+}
+
+function deleteFromServer(name){
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0) return;
+  fetch(GAS_URL, {
+    method:'POST', mode:'no-cors',
+    body: JSON.stringify({action:'delete', name: name})
+  }).catch(()=>{});
+}
+
+function scheduleSave(stylist){
+  saveLocal();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=> pushToServer(stylist), 600);
+}
+
+/* ---------------- video upload ---------------- */
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024; // 60MB の目安上限
+
+function triggerVideoUpload(itemId){
+  const input = document.getElementById('videoFile-' + itemId);
+  if(input) input.click();
+}
+
+function onVideoFileSelected(itemId, inputEl){
+  const file = inputEl.files && inputEl.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('video/')){
+    alert('動画ファイルを選択してください。');
+    return;
+  }
+  if(file.size > MAX_VIDEO_BYTES){
+    const okToContinue = confirm(
+      `ファイルサイズが大きいです（${Math.round(file.size/1024/1024)}MB）。\n` +
+      `アップロードに失敗する場合は、動画を圧縮・低画質にしてから再度お試しください。\n` +
+      `このまま続行しますか？`);
+    if(!okToContinue){ inputEl.value=''; return; }
+  }
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0){
+    alert('GAS_URLが設定されていないため、動画をアップロードできません。');
+    return;
+  }
+  uploadingItems[itemId] = true;
+  render();
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    const base64 = reader.result.split(',')[1];
+    fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      body: JSON.stringify({
+        action:'uploadVideo',
+        itemId: itemId,
+        fileName: file.name,
+        mimeType: file.type,
+        base64: base64
+      })
+    }).then(()=>{
+      pollForVideo(itemId, 0);
+    }).catch(()=>{
+      uploadingItems[itemId] = false;
+      render();
+      alert('アップロードに失敗しました。通信環境をご確認のうえ再度お試しください。');
+    });
+  };
+  reader.onerror = function(){
+    uploadingItems[itemId] = false;
+    render();
+    alert('ファイルの読み込みに失敗しました。');
+  };
+  reader.readAsDataURL(file);
+}
+
+function pollForVideo(itemId, attempt){
+  fetchFromServer(()=>{
+    if(state.videos[String(itemId)] || attempt >= 8){
+      uploadingItems[itemId] = false;
+      openVideoItems[itemId] = true;
+      render();
+    } else {
+      setTimeout(()=> pollForVideo(itemId, attempt+1), 1500);
+    }
+  });
+}
+
+function deleteVideo(itemId){
+  if(!confirm('この動画を削除しますか？')) return;
+  delete state.videos[String(itemId)];
+  saveLocal();
+  render();
+  if(GAS_URL && GAS_URL.indexOf('http')===0){
+    fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      body: JSON.stringify({action:'deleteVideo', itemId: itemId})
+    }).catch(()=>{});
+  }
+}
+
+function toggleVideoPanel(itemId){
+  openVideoItems[itemId] = !openVideoItems[itemId];
+  render();
+}
+
+/* ---------------- photo upload (目標達成フォト) ---------------- */
+const MAX_PHOTO_BYTES = 12 * 1024 * 1024; // 12MB の目安上限
+
+function triggerPhotoUpload(){
+  const input = document.getElementById('photoFileInput');
+  if(input) input.click();
+}
+
+function onPhotoFileSelected(inputEl){
+  const file = inputEl.files && inputEl.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    alert('画像ファイルを選択してください。');
+    inputEl.value='';
+    return;
+  }
+  if(file.size > MAX_PHOTO_BYTES){
+    alert(`ファイルサイズが大きすぎます（${Math.round(file.size/1024/1024)}MB）。12MB以下の画像を選んでください。`);
+    inputEl.value='';
+    return;
+  }
+  const s = state.stylists[currentIndex];
+  if(!s) return;
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0){
+    alert('GAS_URLが設定されていないため、写真をアップロードできません。');
+    return;
+  }
+  uploadingPhoto = true;
+  render();
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    const base64 = reader.result.split(',')[1];
+    fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      body: JSON.stringify({
+        action:'uploadPhoto',
+        name: s.name,
+        fileName: file.name,
+        mimeType: file.type,
+        base64: base64
+      })
+    }).then(()=>{
+      pollForPhoto(s.name, 0);
+    }).catch(()=>{
+      uploadingPhoto = false;
+      render();
+      alert('アップロードに失敗しました。通信環境をご確認のうえ再度お試しください。');
+    });
+  };
+  reader.onerror = function(){
+    uploadingPhoto = false;
+    render();
+    alert('ファイルの読み込みに失敗しました。');
+  };
+  reader.readAsDataURL(file);
+}
+
+function pollForPhoto(name, attempt){
+  const beforeCount = (state.photos[name] || []).length;
+  fetchFromServer(()=>{
+    const afterCount = (state.photos[name] || []).length;
+    if(afterCount > beforeCount || attempt >= 8){
+      uploadingPhoto = false;
+      render();
+    } else {
+      setTimeout(()=> pollForPhoto(name, attempt+1), 1500);
+    }
+  });
+}
+
+function openPhotoLightbox(url){
+  const bg = document.createElement('div');
+  bg.className = 'photo-lightbox-bg';
+  bg.onclick = function(e){ if(e.target === bg) bg.remove(); };
+  bg.innerHTML = `<button class="photo-lightbox-close" onclick="this.closest('.photo-lightbox-bg').remove()">✕</button><img src="${url}">`;
+  document.body.appendChild(bg);
+}
+
+function deletePhotoConfirm(fileId){
+  if(!confirm('この写真を削除しますか？')) return;
+  const s = state.stylists[currentIndex];
+  if(s && state.photos[s.name]){
+    state.photos[s.name] = state.photos[s.name].filter(p => p.fileId !== fileId);
+    saveLocal();
+    render();
+  }
+  if(GAS_URL && GAS_URL.indexOf('http')===0){
+    fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      body: JSON.stringify({action:'deletePhoto', fileId: fileId})
+    }).catch(()=>{});
+  }
+  const modalBg = document.querySelector('.photo-lightbox-bg');
+  if(modalBg) modalBg.remove();
+}
+
+function renderPhotoCard(stylist){
+  const photos = state.photos[stylist.name] || [];
+  const hasPhotos = photos.length > 0;
+  const latest = photos[0];
+  const history = photos.slice(1);
+  const hiddenInput = `<input type="file" accept="image/*" id="photoFileInput" style="display:none" onchange="onPhotoFileSelected(this)">`;
+
+  let mainHtml;
+  if(uploadingPhoto){
+    mainHtml = `<div class="photo-main"><div class="photo-empty"><span class="spinner"></span>　アップロード中…</div></div>`;
+  } else if(hasPhotos){
+    const url = `https://drive.google.com/thumbnail?id=${latest.fileId}&sz=w800`;
+    mainHtml = `<div class="photo-main"><img src="${url}" onclick="openPhotoLightbox('https://drive.google.com/thumbnail?id=${latest.fileId}&sz=w1600')" alt="最新の写真"></div>
+      <div class="photo-meta">最新アップロード：${formatDate(latest.uploadedDate)}（${photos.length}/10枚）</div>`;
+  } else {
+    mainHtml = `<div class="photo-main"><div class="photo-empty">まだ写真がありません<br>「＋ 写真を追加」からアップロードできます</div></div>`;
+  }
+
+  let historyHtml = '';
+  if(history.length > 0){
+    historyHtml = `<div class="photo-history">` + history.map(p => {
+      const turl = `https://drive.google.com/thumbnail?id=${p.fileId}&sz=w200`;
+      const lurl = `https://drive.google.com/thumbnail?id=${p.fileId}&sz=w1600`;
+      return `<img src="${turl}" onclick="openPhotoLightbox('${lurl}')" title="${formatDate(p.uploadedDate)}">`;
+    }).join('') + `</div>`;
+  }
+
+  return `<div class="photo-card">${hiddenInput}
+    <div class="photo-card-head">
+      <span class="photo-title">📷 目標達成フォト</span>
+      <button class="photo-upload-btn" onclick="triggerPhotoUpload()" ${uploadingPhoto?'disabled':''}>＋ 写真を追加</button>
+    </div>
+    ${mainHtml}
+    ${historyHtml}
+  </div>`;
+}
+
+/* ---------------- calculations ---------------- */
+function calcPct(stylist){
+  const targets = effectiveTargetItems();
+  if(!targets.length) return 0;
+  let done = 0;
+  targets.forEach(it=>{
+    const c = stylist.checklist[it.id];
+    if(c && c.c1 && c.c2) done++;
+  });
+  return Math.round(done / targets.length * 100);
+}
+
+/* ---------------- rendering: list view ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  if(currentView === 'list'){
+    renderList(app);
+  } else {
+    renderDetail(app);
+  }
+}
+
+function renderList(app){
+  let html = `<button class="add-btn" onclick="openAddModal()">＋ 新しいスタイリストを追加</button>`;
+  if(state.stylists.length === 0){
+    html += `<div class="empty-state"><div class="big">💇</div>まだスタイリストが登録されていません。<br>上のボタンから追加してください。</div>`;
+  } else {
+    state.stylists
+      .slice()
+      .sort((a,b)=> (a.name||'').localeCompare(b.name||'', 'ja'))
+      .forEach(s=>{
+        const idx = state.stylists.indexOf(s);
+        const pct = calcPct(s);
+        const ringColor = pct >= 80 ? 'var(--green-d)' : pct >= 40 ? '#E0B25B' : 'var(--pink-d)';
+        html += `
+        <div class="stylist-card" onclick="openDetail(${idx})">
+          <div class="ring" style="--pct:${pct}; --ring-color:${ringColor};"><span>${pct}%</span></div>
+          <div class="stylist-info">
+            <div class="stylist-name">${escapeHtml(s.name || '（名前未設定）')}</div>
+            <div class="stylist-meta">更新: ${formatDate(s.updatedDate)}　開始: ${formatDate(s.startDate)}</div>
+          </div>
+        </div>`;
+      });
+  }
+  app.innerHTML = html;
+}
+
+function formatDate(d){
+  if(!d) return '-';
+  try{ const dt = new Date(d); if(isNaN(dt)) return d;
+    return `${dt.getFullYear()}/${dt.getMonth()+1}/${dt.getDate()}`;
+  }catch(e){ return d; }
+}
+function formatShortDate(d){
+  if(!d) return '';
+  try{ const dt = new Date(d); if(isNaN(dt)) return '';
+    return `${dt.getMonth()+1}/${dt.getDate()}`;
+  }catch(e){ return ''; }
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------------- rendering: detail view ---------------- */
+function renderDetail(app){
+  const s = state.stylists[currentIndex];
+  if(!s){ currentView='list'; render(); return; }
+  const pct = calcPct(s);
+  const targets = effectiveTargetItems();
+  let doneBoth=0, donePartial=0;
+  targets.forEach(it=>{
+    const c = s.checklist[it.id];
+    if(c && c.c1 && c.c2) doneBoth++;
+    else if(c && (c.c1 || c.c2)) donePartial++;
+  });
+
+  let html = `
+  <div class="detail-header">
+    <button class="back-btn" onclick="backToList()">←</button>
+    <input class="name-input" value="${escapeHtml(s.name)}" oninput="updateName(this.value)" placeholder="氏名">
+    <button class="del-btn" onclick="confirmDelete()">削除</button>
+  </div>
+  <div class="meta-row">
+    <div class="meta-field"><label>開始日</label><input type="date" value="${s.startDate||''}" onchange="updateField('startDate', this.value)"></div>
+    <div class="meta-field"><label>最終更新</label><div style="font-size:13px;padding-top:2px;">${formatDate(s.updatedDate)}</div></div>
+  </div>
+  <div class="progress-card">
+    <div class="progress-ring" style="--pct:${pct};"><div class="num">${pct}%</div></div>
+    <div class="progress-text">
+      <div class="label">達成率（講師2名とも✓で達成）</div>
+      <div class="sub">完了 ${doneBoth} / ${targets.length} 項目　・　片方チェック ${donePartial} 項目</div>
+      <div class="legend">
+        <span><i style="background:var(--green-d);"></i>両講師チェック済み</span>
+        <span><i style="background:#E0B25B;"></i>片方のみ</span>
+        <span><i style="background:#ECE6DC;"></i>未着手</span>
+      </div>
+    </div>
+  </div>`;
+
+  html += renderPhotoCard(s);
+
+  const allItems = effectiveItems();
+
+  CATEGORIES.forEach(cat=>{
+    const colors = CAT_COLORS[cat];
+    const catItems = allItems.filter(it=>it.category===cat);
+    const targetCount = catItems.filter(it=>it.type!=='お知らせ').length;
+    let catDone = 0;
+    catItems.forEach(it=>{
+      const c = s.checklist[it.id];
+      if(it.type!=='お知らせ' && c && c.c1 && c.c2) catDone++;
+    });
+    const collapsed = collapsedCats[cat] ? 'collapsed' : '';
+    html += `<div class="cat-section">
+      <div class="cat-head" onclick="toggleCat('${cat}')">
+        <div class="cat-head-left">
+          <div class="cat-icon-badge" style="background:${colors.light};">${colors.icon}</div>
+          <span class="cat-head-name">${cat}</span>
+        </div>
+        <span class="cnt">${catDone}/${targetCount} ▾</span>
+      </div>
+      <div class="cat-body ${collapsed}" id="catbody-${cat}">`;
+    catItems.forEach(it=>{
+      if(it.type === 'お知らせ'){
+        html += `
+        <div class="item-row note" style="background:${colors.mid}; color:#5a4636;">
+          <span>◆ ${escapeHtml(it.item)}</span>
+          <button class="edit-icon-btn" onclick="openItemEditModal(${it.id})" title="編集">✏️</button>
+        </div>`;
+      } else {
+        const c = s.checklist[it.id] || {i1:it.instructor||'', c1:false, i2:'', c2:false};
+        const rowClass = (c.c1 && c.c2) ? 'both' : (c.c1 || c.c2) ? 'partial' : '';
+        const video = state.videos[String(it.id)];
+        const isUploading = !!uploadingItems[it.id];
+        const isOpen = !!openVideoItems[it.id];
+        const name1 = escapeHtml(c.i1 || '担当講師1');
+        const name2 = escapeHtml(c.i2 || '担当講師2');
+        const date1 = c.c1 ? formatShortDate(c.d1) : '';
+        const date2 = c.c2 ? formatShortDate(c.d2) : '';
+        html += `
+        <div class="item-row ${rowClass}" style="background:${colors.light};">
+          <div class="item-top">
+            <div class="item-name"><span class="item-type">${it.type}</span>${escapeHtml(it.item)}</div>
+            <div style="display:flex; align-items:center; gap:6px; flex:none;">
+              ${it.detail ? `<div class="item-detail">${escapeHtml(it.detail)}</div>` : ''}
+              <button class="edit-icon-btn" onclick="openItemEditModal(${it.id})" title="編集">✏️</button>
+            </div>
+          </div>
+          <div class="instructor-grid">
+            <button class="instr-pill ${c.c1?'on':''}" onclick="openInstructorModal(${it.id},'1')">
+              <span class="iname">${c.c1?'✓ ':''}${name1}</span>${date1?`<span class="idate">${date1}</span>`:''}
+            </button>
+            <button class="instr-pill ${c.c2?'on':''}" onclick="openInstructorModal(${it.id},'2')">
+              <span class="iname">${c.c2?'✓ ':''}${name2}</span>${date2?`<span class="idate">${date2}</span>`:''}
+            </button>
+          </div>
+          ${renderVideoSection(it.id, video, isUploading, isOpen)}
+        </div>`;
+      }
+    });
+    html += `<button class="add-item-btn" onclick="openAddItemModal('${cat}')">＋ 項目を追加</button>`;
+    html += `</div></div>`;
+  });
+
+  html += `<div class="footer-note">No.8 育成カリキュラム管理アプリ</div>`;
+  app.innerHTML = html;
+}
+
+function toggleCat(cat){
+  collapsedCats[cat] = !collapsedCats[cat];
+  render();
+}
+
+function renderVideoSection(itemId, video, isUploading, isOpen){
+  const hiddenInput = `<input type="file" accept="video/*" id="videoFile-${itemId}" style="display:none" onchange="onVideoFileSelected(${itemId}, this)">`;
+
+  if(isUploading){
+    return `<div class="video-section">${hiddenInput}
+      <div class="video-toggle-row">
+        <button class="video-btn uploading" disabled><span class="spinner"></span>アップロード中…</button>
+      </div>
+    </div>`;
+  }
+
+  if(!video){
+    return `<div class="video-section">${hiddenInput}
+      <div class="video-toggle-row">
+        <button class="video-btn none" onclick="triggerVideoUpload(${itemId})">🎬 ＋ 動画をアップロード</button>
+      </div>
+    </div>`;
+  }
+
+  const previewUrl = `https://drive.google.com/file/d/${video.fileId}/preview`;
+  let body = '';
+  if(isOpen){
+    body = `<div class="video-frame-wrap"><iframe src="${previewUrl}" allow="autoplay" allowfullscreen></iframe></div>
+      <div class="video-meta-row">
+        <span class="fname">${escapeHtml(video.fileName||'')}</span>
+        <span class="actions">
+          <button onclick="triggerVideoUpload(${itemId})">差し替え</button>
+          <button class="danger" onclick="deleteVideo(${itemId})">削除</button>
+        </span>
+      </div>`;
+  }
+  return `<div class="video-section">${hiddenInput}
+    <div class="video-toggle-row">
+      <button class="video-btn has" onclick="toggleVideoPanel(${itemId})">🎬 ${isOpen ? '動画を閉じる' : '動画を見る'}</button>
+    </div>
+    ${body}
+  </div>`;
+}
+
+/* ---------------- actions ---------------- */
+function openDetail(idx){
+  currentIndex = idx;
+  currentView = 'detail';
+  render();
+}
+function backToList(){
+  currentView = 'list';
+  render();
+}
+function touchStylist(s){
+  s.updatedDate = new Date().toISOString();
+  scheduleSave(s);
+}
+function updateName(val){
+  const s = state.stylists[currentIndex];
+  s.name = val;
+  touchStylist(s);
+}
+function updateField(field, val){
+  const s = state.stylists[currentIndex];
+  s[field] = val;
+  touchStylist(s);
+  render();
+}
+function ensureItem(s, id){
+  if(!s.checklist[id]) s.checklist[id] = {i1:'', c1:false, i2:'', c2:false, d1:null, d2:null};
+  return s.checklist[id];
+}
+function confirmDelete(){
+  const s = state.stylists[currentIndex];
+  if(confirm(`「${s.name||'このスタイリスト'}」を削除しますか？この操作は取り消せません。`)){
+    deleteFromServer(s.name);
+    state.stylists.splice(currentIndex,1);
+    saveLocal();
+    backToList();
+  }
+}
+
+/* ---------------- instructor pill modal ---------------- */
+function openInstructorModal(itemId, slot){
+  const s = state.stylists[currentIndex];
+  const c = ensureItem(s, itemId);
+  const key = 'i' + slot;
+  const dateKey = 'd' + slot;
+  const dateHint = c['c'+slot] && c[dateKey] ? `<div style="font-size:11px;color:var(--ink-soft);margin:-8px 0 10px;">チェック日：${formatDate(c[dateKey])}</div>` : '';
+  const roster = state.settings.instructors || [];
+  const quickChips = roster.length > 0
+    ? `<div class="instr-chip-row">` + roster.map(name =>
+        `<button class="instr-chip" onclick="quickSelectInstructor(${itemId},'${slot}','${name.replace(/'/g,"\\'")}')">${escapeHtml(name)}</button>`
+      ).join('') + `</div>`
+    : `<div class="hint" style="margin:-4px 0 10px;">⚙️設定から講師リストを登録すると、ここにワンタップ用ボタンが表示されます。</div>`;
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>担当講師${slot}</h3>
+      ${quickChips}
+      <input type="text" id="instrNameInput" placeholder="講師名を入力" value="${escapeHtml(c[key] || '')}">
+      ${dateHint}
+      <div style="text-align:right; margin:-8px 0 14px;">
+        <button style="border:none;background:none;color:#C77A6F;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:4px;" onclick="saveInstructor(${itemId},'${slot}',false)">未チェックに戻す</button>
+      </div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="this.closest('.modal-bg').remove()">キャンセル</button>
+        <button class="ok" onclick="saveInstructor(${itemId},'${slot}',true)">保存してチェック（${formatShortDate(new Date().toISOString())}）</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  setTimeout(()=> document.getElementById('instrNameInput').focus(), 50);
+}
+function quickSelectInstructor(itemId, slot, name){
+  const s = state.stylists[currentIndex];
+  const c = ensureItem(s, itemId);
+  c['i' + slot] = name;
+  c['c' + slot] = true;
+  c['d' + slot] = new Date().toISOString();
+  c.date = new Date().toISOString();
+  touchStylist(s);
+  const modalBg = document.querySelector('.modal-bg');
+  if(modalBg) modalBg.remove();
+  render();
+}
+function saveInstructor(itemId, slot, checked){
+  const s = state.stylists[currentIndex];
+  const c = ensureItem(s, itemId);
+  const nameInput = document.getElementById('instrNameInput');
+  const name = nameInput ? nameInput.value.trim() : '';
+  const isChecked = checked && !!name;
+  c['i' + slot] = name;
+  c['c' + slot] = isChecked;
+  c['d' + slot] = isChecked ? new Date().toISOString() : null;
+  c.date = new Date().toISOString();
+  touchStylist(s);
+  const modalBg = document.querySelector('.modal-bg');
+  if(modalBg) modalBg.remove();
+  render();
+}
+
+/* ---------------- item edit modal (shared master content) ---------------- */
+/* ---------------- add new item modal ---------------- */
+function openAddItemModal(category){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>項目を追加（${escapeHtml(category)}）</h3>
+      <select id="newItemType" onchange="onNewItemTypeChange()" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:14px;">
+        <option value="実技">実技</option>
+        <option value="講義">講義</option>
+        <option value="お知らせ">お知らせ（区切り・お知らせ行）</option>
+      </select>
+      <input type="text" id="newItemNameInput" placeholder="項目名（必須）">
+      <input type="text" id="newItemDetailInput" placeholder="詳細（時間・回数など）">
+      <div class="modal-actions">
+        <button class="cancel" onclick="this.closest('.modal-bg').remove()">キャンセル</button>
+        <button class="ok" onclick="addNewItem('${category}')">追加</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  setTimeout(()=> document.getElementById('newItemNameInput').focus(), 50);
+}
+function onNewItemTypeChange(){
+  const type = document.getElementById('newItemType').value;
+  const detailInput = document.getElementById('newItemDetailInput');
+  if(detailInput) detailInput.style.display = (type === 'お知らせ') ? 'none' : 'block';
+}
+function addNewItem(category){
+  const nameInput = document.getElementById('newItemNameInput');
+  const detailInput = document.getElementById('newItemDetailInput');
+  const typeSelect = document.getElementById('newItemType');
+  const name = nameInput ? nameInput.value.trim() : '';
+  if(!name){ if(nameInput) nameInput.focus(); return; }
+  const type = typeSelect ? typeSelect.value : '実技';
+  const detail = (type === 'お知らせ') ? '' : (detailInput ? detailInput.value.trim() : '');
+  const newId = Date.now();
+  const edit = { item: name, detail: detail, deleted: false, category: category, type: type };
+  state.itemEdits[String(newId)] = edit;
+  saveLocal();
+  pushItemEdit(newId, edit);
+  const modalBg = document.querySelector('.modal-bg');
+  if(modalBg) modalBg.remove();
+  render();
+}
+
+function openItemEditModal(itemId){
+  const it = effectiveItems().find(x => x.id === itemId);
+  if(!it) return;
+  const isNote = it.type === 'お知らせ';
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>${isNote ? '内容を編集' : '項目を編集'}</h3>
+      <input type="text" id="editItemInput" placeholder="${isNote ? '内容' : '項目名'}" value="${escapeHtml(it.item)}">
+      ${isNote ? '' : `<input type="text" id="editDetailInput" placeholder="詳細（時間・回数など）" value="${escapeHtml(it.detail||'')}">`}
+      <div style="text-align:right; margin:-8px 0 14px;">
+        <button style="border:none;background:none;color:#C77A6F;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:4px;" onclick="deleteItemConfirm(${itemId})">この項目を削除する</button>
+      </div>
+      <div class="modal-actions">
+        <button class="cancel" onclick="this.closest('.modal-bg').remove()">キャンセル</button>
+        <button class="ok" onclick="saveItemEdit(${itemId}, ${isNote})">保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  setTimeout(()=> document.getElementById('editItemInput').focus(), 50);
+}
+function saveItemEdit(itemId, isNote){
+  const itemInput = document.getElementById('editItemInput');
+  const detailInput = document.getElementById('editDetailInput');
+  const newItem = itemInput ? itemInput.value.trim() : '';
+  const newDetail = detailInput ? detailInput.value.trim() : '';
+  if(!newItem){ if(itemInput) itemInput.focus(); return; }
+  const edit = Object.assign({}, state.itemEdits[String(itemId)] || {}, {
+    item: newItem,
+    detail: isNote ? '' : newDetail,
+    deleted: false
+  });
+  state.itemEdits[String(itemId)] = edit;
+  saveLocal();
+  pushItemEdit(itemId, edit);
+  const modalBg = document.querySelector('.modal-bg');
+  if(modalBg) modalBg.remove();
+  render();
+}
+function deleteItemConfirm(itemId){
+  if(!confirm('この項目を削除しますか？すべてのスタイリストの画面から表示されなくなります。')) return;
+  const edit = Object.assign({}, state.itemEdits[String(itemId)] || {}, { deleted: true });
+  state.itemEdits[String(itemId)] = edit;
+  saveLocal();
+  pushItemEdit(itemId, edit);
+  const modalBg = document.querySelector('.modal-bg');
+  if(modalBg) modalBg.remove();
+  render();
+}
+function pushItemEdit(itemId, edit){
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0) return;
+  fetch(GAS_URL, {
+    method:'POST', mode:'no-cors',
+    body: JSON.stringify({
+      action:'itemEdit',
+      itemId: itemId,
+      item: edit.deleted ? '' : (edit.item || ''),
+      detail: edit.deleted ? '' : (edit.detail || ''),
+      deleted: !!edit.deleted,
+      category: edit.category || '',
+      type: edit.type || ''
+    })
+  }).catch(()=>{});
+}
+
+/* ---------------- report settings modal ---------------- */
+function openSettingsModal(){
+  const emails = state.settings.emails || [];
+  const instructors = state.settings.instructors || [];
+  const emailInputs = [];
+  for(let i=0; i<9; i++){
+    emailInputs.push(`<input type="email" class="email-input" id="emailInput${i}" placeholder="メールアドレス${i+1}" value="${escapeHtml(emails[i]||'')}">`);
+  }
+  const instructorInputs = [];
+  for(let i=0; i<9; i++){
+    instructorInputs.push(`<input type="text" class="email-input" id="instructorInput${i}" placeholder="講師名${i+1}" value="${escapeHtml(instructors[i]||'')}">`);
+  }
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="modal report-modal">
+      <h3>👤 講師リスト（クイック選択）</h3>
+      <div class="hint">ここに登録した講師名は、チェック画面でボタンとして表示され、タップだけで講師名と日付を記録できます（最大9名）。</div>
+      ${instructorInputs.join('')}
+
+      <h3 style="margin-top:18px;">📧 達成率レポートの送信設定</h3>
+      <div class="hint">毎月末に、登録スタイリストの達成率グラフをメールで自動送信します（最大9件まで設定可）。「今すぐ送信」でテスト送信もできます。</div>
+      ${emailInputs.join('')}
+      <div id="reportStatus"></div>
+      <div class="modal-actions" style="margin-top:10px;">
+        <button class="cancel" onclick="this.closest('.modal-bg').remove()">閉じる</button>
+        <button class="ok" onclick="saveSettingsFromModal()">保存</button>
+      </div>
+      <button class="send-now-btn" id="sendNowBtn" onclick="sendReportNow()">📤 今すぐ送信する</button>
+    </div>`;
+  document.body.appendChild(bg);
+}
+function collectInstructorInputs(){
+  const list = [];
+  for(let i=0; i<9; i++){
+    const el = document.getElementById('instructorInput' + i);
+    if(el && el.value.trim()) list.push(el.value.trim());
+  }
+  return list;
+}
+function collectEmailInputs(){
+  const emails = [];
+  for(let i=0; i<9; i++){
+    const el = document.getElementById('emailInput' + i);
+    if(el && el.value.trim()) emails.push(el.value.trim());
+  }
+  return emails;
+}
+function saveSettingsFromModal(){
+  const emails = collectEmailInputs();
+  const instructors = collectInstructorInputs();
+  state.settings.emails = emails;
+  state.settings.instructors = instructors;
+  saveLocal();
+  const statusEl = document.getElementById('reportStatus');
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0){
+    if(statusEl) statusEl.innerHTML = '<div class="report-status err">GAS_URLが未設定のため保存できません</div>';
+    return;
+  }
+  fetch(GAS_URL, {
+    method:'POST', mode:'no-cors',
+    body: JSON.stringify({ action:'saveSettings', emails: emails, instructors: instructors })
+  }).then(()=>{
+    if(statusEl) statusEl.innerHTML = '<div class="report-status ok">保存しました</div>';
+  }).catch(()=>{
+    if(statusEl) statusEl.innerHTML = '<div class="report-status err">保存に失敗しました</div>';
+  });
+}
+function sendReportNow(){
+  if(!GAS_URL || GAS_URL.indexOf('http')!==0){
+    alert('GAS_URLが設定されていません。');
+    return;
+  }
+  const btn = document.getElementById('sendNowBtn');
+  const statusEl = document.getElementById('reportStatus');
+  if(btn){ btn.disabled = true; btn.textContent = '送信中…'; }
+  const cbName = 'no8send_' + Date.now();
+  window[cbName] = function(result){
+    delete window[cbName];
+    script.remove();
+    if(btn){ btn.disabled = false; btn.textContent = '📤 今すぐ送信する'; }
+    if(statusEl){
+      if(result && result.status === 'ok'){
+        statusEl.innerHTML = `<div class="report-status ok">送信しました（${result.sentTo}件）</div>`;
+      } else {
+        statusEl.innerHTML = `<div class="report-status err">送信に失敗しました：${escapeHtml((result && result.message) || '不明なエラー')}</div>`;
+      }
+    }
+  };
+  const script = document.createElement('script');
+  script.src = GAS_URL + '?action=sendNow&callback=' + cbName;
+  script.onerror = function(){
+    if(btn){ btn.disabled = false; btn.textContent = '📤 今すぐ送信する'; }
+    if(statusEl) statusEl.innerHTML = '<div class="report-status err">送信リクエストに失敗しました</div>';
+  };
+  document.body.appendChild(script);
+}
+
+/* ---------------- add modal ---------------- */
+function openAddModal(){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>新しいスタイリスト</h3>
+      <input type="text" id="newNameInput" placeholder="氏名を入力">
+      <div class="modal-actions">
+        <button class="cancel" onclick="this.closest('.modal-bg').remove()">キャンセル</button>
+        <button class="ok" onclick="addStylist()">追加</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  setTimeout(()=> document.getElementById('newNameInput').focus(), 50);
+}
+function addStylist(){
+  const input = document.getElementById('newNameInput');
+  const name = input.value.trim();
+  if(!name){ input.focus(); return; }
+  const now = new Date().toISOString();
+  const s = { name, startDate: now.slice(0,10), updatedDate: now, checklist:{} };
+  state.stylists.push(s);
+  saveLocal();
+  pushToServer(s);
+  document.querySelector('.modal-bg').remove();
+  currentIndex = state.stylists.length - 1;
+  currentView = 'detail';
+  render();
+}
+
+/* ---------------- init ---------------- */
+loadLocal();
+render();
+fetchFromServer();
+</script>
+</body>
+</html>
